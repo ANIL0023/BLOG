@@ -60,19 +60,19 @@ export function AuthorProfileUI({ author, blogs }: AuthorProfileUIProps) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Profile Header */}
-      <div className="relative mb-12">
+      <div className="relative mb-8 md:mb-12">
         {/* Banner */}
-        <div className="h-48 rounded-3xl gradient-bg opacity-80 mb-16" />
+        <div className="h-32 md:h-48 rounded-3xl gradient-bg opacity-80 mb-12" />
 
         {/* Profile Card */}
-        <div className="absolute bottom-0 left-0 right-0 flex flex-col md:flex-row items-start md:items-end gap-4 px-6">
-          <div className="relative -mb-6">
+        <div className="absolute -bottom-6 left-0 right-0 flex flex-col md:flex-row items-start md:items-end gap-3 md:gap-4 px-6">
+          <div className="relative">
             <Image
               src={author.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${author.name}`}
               alt={author.name}
-              width={96}
-              height={96}
-              className="rounded-full bg-white dark:bg-dark-card ring-4 ring-white dark:ring-dark-bg shadow-xl"
+              width={80}
+              height={80}
+              className="md:w-24 md:h-24 rounded-full bg-white dark:bg-dark-card ring-4 ring-white dark:ring-dark-bg shadow-xl"
             />
           </div>
           <div className="flex-1 pb-2">
