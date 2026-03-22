@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(request: Request) {
   try {
@@ -14,17 +19,30 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = join(process.cwd(), 'public/uploads');
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const filename = `${uniqueSuffix}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '')}`;
-    const path = join(uploadDir, filename);
+    // Upload to Cloudinary using a Promise-wrapped stream
+    const uploadResponse = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'blogo_uploads',
+          resource_type: 'auto',
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(buffer);
+    });
 
-    await mkdir(uploadDir, { recursive: true });
-    await writeFile(path, buffer);
+    const result = uploadResponse as any;
 
-    return NextResponse.json({ success: true, url: `/uploads/${filename}` });
+    return NextResponse.json({ 
+      success: true, 
+      url: result.secure_url 
+    });
+
   } catch (error) {
-    console.error('Upload Error:', error);
+    console.error('Cloudinary Upload Error:', error);
     return NextResponse.json({ success: false, message: 'Upload failed' }, { status: 500 });
   }
 }
