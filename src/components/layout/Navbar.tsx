@@ -3,8 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, Menu, X, PenSquare, Bell, User, ChevronDown, Flame } from 'lucide-react';
+import { Search, Menu, X, PenSquare, Bell, User, ChevronDown, Flame, LogOut, Settings } from 'lucide-react';
+import { useSession, signOut } from 'next-auth/react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { auth } from '@/lib/firebase';
+import { signOut as firebaseSignOut } from 'firebase/auth';
+import toast from 'react-hot-toast';
 
 const navLinks = [
   { href: '/blogs', label: 'Explore' },
@@ -21,6 +25,7 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const pathname = usePathname();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -102,13 +107,66 @@ export function Navbar() {
                 Write
               </Link>
 
-              <Link
-                href="/auth/login"
-                className="btn-secondary text-sm px-4 py-2 rounded-lg"
-              >
-                <User className="w-4 h-4" />
-                Sign In
-              </Link>
+              {status === 'authenticated' ? (
+                <div className="relative group">
+                  <button className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-card transition-all">
+                    {session.user?.image ? (
+                      <img
+                        src={session.user.image}
+                        alt={session.user.name || 'User'}
+                        className="w-8 h-8 rounded-full border border-gray-200 dark:border-dark-border"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 dark:text-primary-400">
+                        <User className="w-4 h-4" />
+                      </div>
+                    )}
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  </button>
+
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-card rounded-xl shadow-xl border border-gray-100 dark:border-dark-border py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="px-4 py-2 border-b border-gray-100 dark:border-dark-border mb-1">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        {session.user?.name}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-dark-muted truncate">
+                        {session.user?.email}
+                      </p>
+                    </div>
+                    <Link href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-dark-muted hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-primary-600 dark:hover:text-primary-400">
+                      <User className="w-4 h-4" /> Dashboard
+                    </Link>
+                    <Link href="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-dark-muted hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-primary-600 dark:hover:text-primary-400">
+                      <Settings className="w-4 h-4" /> Settings
+                    </Link>
+                    <button
+                      onClick={async () => {
+                        const toastId = toast.loading('Signing out...');
+                        try {
+                          await firebaseSignOut(auth);
+                          await signOut({ redirect: false, callbackUrl: '/' });
+                          router.push('/');
+                          router.refresh();
+                          toast.success('Signed out!', { id: toastId });
+                        } catch (error) {
+                          toast.error('Sign out failed', { id: toastId });
+                        }
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4" /> Sign Out
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="btn-secondary text-sm px-4 py-2 rounded-lg"
+                >
+                  <User className="w-4 h-4" />
+                  Sign In
+                </Link>
+              )}
             </div>
 
             {/* Mobile Actions */}
@@ -142,13 +200,38 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <div className="pt-3 border-t border-gray-200 dark:border-dark-border flex gap-2">
+            <div className="pt-3 border-t border-gray-200 dark:border-dark-border flex flex-col gap-2">
               <Link href="/write" className="btn-primary flex-1 text-sm py-2.5 rounded-xl">
                 <PenSquare className="w-4 h-4" /> Write
               </Link>
-              <Link href="/auth/login" className="btn-secondary flex-1 text-sm py-2.5 rounded-xl">
-                Sign In
-              </Link>
+              {status === 'authenticated' ? (
+                <>
+                  <Link href="/dashboard" className="btn-secondary flex-1 text-sm py-2.5 rounded-xl">
+                    <User className="w-4 h-4" /> Dashboard
+                  </Link>
+                  <button
+                    onClick={async () => {
+                      const toastId = toast.loading('Signing out...');
+                      try {
+                        await firebaseSignOut(auth);
+                        await signOut({ redirect: false, callbackUrl: '/' });
+                        router.push('/');
+                        router.refresh();
+                        toast.success('Signed out!', { id: toastId });
+                      } catch (error) {
+                        toast.error('Sign out failed', { id: toastId });
+                      }
+                    }}
+                    className="flex-1 text-sm py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" /> Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link href="/auth/login" className="btn-secondary flex-1 text-sm py-2.5 rounded-xl">
+                  Sign In
+                </Link>
+              )}
             </div>
           </div>
         )}

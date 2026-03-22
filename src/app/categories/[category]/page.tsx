@@ -1,4 +1,5 @@
-import { getBlogsByCategory, categories } from '@/lib/data';
+import { categories } from '@/lib/data';
+import { getDbBlogsByCategory } from '@/lib/db-queries';
 import { BlogCard } from '@/components/blog/BlogCard';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -16,10 +17,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: cat ? `${cat.name} Articles` : 'Category' };
 }
 
-export default function CategoryPage({ params }: Props) {
+export default async function CategoryPage({ params }: Props) {
   const cat = categories.find((c) => c.slug === params.category);
   const categoryName = cat?.name || params.category.replace('-', ' & ');
-  const blogs = getBlogsByCategory(categoryName);
+  const rawBlogs = await getDbBlogsByCategory(categoryName);
+  
+  const blogs = rawBlogs.map(p => ({
+    id: p._id.toString(),
+    slug: p._id.toString(),
+    title: p.title,
+    excerpt: p.excerpt || p.content?.substring(0, 120),
+    content: p.content,
+    coverImage: p.coverImage || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643',
+    category: p.category,
+    tags: p.tags || [],
+    author: {
+       id: p.author?._id?.toString() || 'unknown',
+       name: p.author?.name || 'Writer',
+       avatar: p.author?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.author?.name || 'anon'}`,
+       bio: 'Professional writer and contributor.',
+       followers: 0,
+       articles: 0,
+       category: 'Technology',
+       social: { twitter: '#', github: '#' }
+    },
+    publishedAt: p.createdAt.toISOString(),
+    readingTime: Math.ceil((p.content?.length || 0) / 1000) || 5,
+    likes: p.likes || 0,
+    comments: p.comments || 0,
+    views: p.views || 0,
+    featured: p.featured || false,
+    trending: p.trending || false
+  }));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

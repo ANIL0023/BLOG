@@ -1,19 +1,50 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, SlidersHorizontal } from 'lucide-react';
 import { BlogCard } from '@/components/blog/BlogCard';
-import { BlogCardSkeleton } from '@/components/ui/BlogCardSkeleton';
-import { blogs, categories } from '@/lib/data';
+import { categories } from '@/lib/data';
 
 export default function BlogsPage() {
+  const [dbBlogs, setDbBlogs] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState<'recent' | 'popular' | 'trending'>('recent');
 
+  useEffect(() => {
+    fetch('/api/posts')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data) {
+          const mapped = data.data.map((p: any) => ({
+            id: p._id,
+            slug: p._id,
+            title: p.title,
+            excerpt: p.excerpt || p.content?.substring(0, 120) || '',
+            content: p.content,
+            coverImage: p.coverImage || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643',
+            category: p.category,
+            tags: p.tags || [],
+            author: {
+              id: p.author?._id || 'unknown',
+              name: p.author?.name || 'System',
+              avatar: p.author?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.author?.name || 'anon'}`,
+            },
+            publishedAt: p.createdAt,
+            readingTime: Math.max(1, Math.ceil((p.content?.split(/\s+/)?.length || 0) / 200)),
+            likes: p.likes || 0,
+            views: p.views || 0,
+            trending: p.views > 50
+          }));
+          setDbBlogs(mapped);
+        }
+      })
+      .catch(err => console.error(err));
+  }, []);
+
   const filtered = useMemo(() => {
-    let result = [...blogs];
+    let result = [...dbBlogs];
     if (selectedCategory !== 'all') {
       result = result.filter((b) => b.category.toLowerCase() === selectedCategory.toLowerCase());
     }
@@ -23,7 +54,7 @@ export default function BlogsPage() {
         (b) =>
           b.title.toLowerCase().includes(q) ||
           b.excerpt.toLowerCase().includes(q) ||
-          b.tags.some((t) => t.toLowerCase().includes(q))
+          b.tags.some((t: string) => t.toLowerCase().includes(q))
       );
     }
     switch (sortBy) {

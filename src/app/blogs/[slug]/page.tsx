@@ -1,16 +1,62 @@
 import { notFound } from 'next/navigation';
-import { getBlogBySlug, getRelatedBlogs, blogs } from '@/lib/data';
+import { getBlogBySlug, getRelatedBlogs, blogs, type Blog } from '@/lib/data';
 import { BlogDetail } from '@/components/blog/BlogDetail';
 import { CommentSection } from '@/components/blog/CommentSection';
 import { RelatedArticles } from '@/components/blog/RelatedArticles';
 import type { Metadata } from 'next';
+import connectDB from '@/lib/db';
+import Post from '@/models/Post';
+import mongoose from 'mongoose';
 
 interface Props {
   params: { slug: string };
 }
 
+async function fetchBlog(slug: string): Promise<Blog | undefined> {
+  // Try finding it in DB first if it's a valid Mongo ObjectId
+  if (mongoose.Types.ObjectId.isValid(slug)) {
+    try {
+      await connectDB();
+      const p = await Post.findById(slug).populate('author', 'name image');
+      if (p) {
+        return {
+          id: p._id.toString(),
+          slug: p._id.toString(),
+          title: p.title,
+          excerpt: p.excerpt || p.content?.substring(0, 120) || '',
+          content: p.content,
+          coverImage: p.coverImage || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643',
+          category: p.category,
+          tags: p.tags || [],
+          author: {
+            id: p.author?._id?.toString() || 'unknown',
+            name: p.author?.name || 'System',
+            avatar: p.author?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.author?.name || 'anon'}`,
+            bio: 'Writer and developer sharing insights on tech and life.',
+            followers: 0,
+            articles: 1,
+            category: 'Technology',
+            social: { twitter: '#', github: '#' }
+          },
+          publishedAt: p.createdAt.toISOString(),
+          readingTime: Math.max(1, Math.ceil((p.content?.split(/\\s+/)?.length || 0) / 200)),
+          likes: p.likes || 0,
+          views: p.views || 0,
+          trending: p.views > 50,
+          comments: 0,
+          featured: false
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching blog from DB:', error);
+    }
+  }
+
+  return getBlogBySlug(slug);
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const blog = getBlogBySlug(params.slug);
+  const blog = await fetchBlog(params.slug);
   if (!blog) return { title: 'Not Found' };
   return {
     title: blog.title,
@@ -27,8 +73,8 @@ export function generateStaticParams() {
   return blogs.map((b) => ({ slug: b.slug }));
 }
 
-export default function BlogPage({ params }: Props) {
-  const blog = getBlogBySlug(params.slug);
+export default async function BlogPage({ params }: Props) {
+  const blog = await fetchBlog(params.slug);
   if (!blog) notFound();
 
   const related = getRelatedBlogs(blog, 3);
@@ -39,7 +85,7 @@ export default function BlogPage({ params }: Props) {
         {/* Main content */}
         <div>
           <BlogDetail blog={blog} />
-          <CommentSection blogId={blog.id} commentCount={blog.comments} />
+          <CommentSection blogId={blog.id} commentCount={blog.comments || 0} />
         </div>
 
         {/* Sidebar */}

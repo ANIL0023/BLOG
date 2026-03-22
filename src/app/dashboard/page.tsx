@@ -1,10 +1,11 @@
-import type { Metadata } from 'next';
+'use client';
+
 import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar';
 import { Analytics } from '@/components/dashboard/Analytics';
 import { PenSquare, BookOpen, TrendingUp, Bell } from 'lucide-react';
 import Link from 'next/link';
-
-export const metadata: Metadata = { title: 'Dashboard' };
+import { useSession } from 'next-auth/react';
+import { redirect } from 'next/navigation';
 
 const quickActions = [
   { href: '/write', icon: PenSquare, label: 'New Article', color: 'bg-primary-600 hover:bg-primary-700 text-white' },
@@ -13,6 +14,15 @@ const quickActions = [
 ];
 
 export default function DashboardPage() {
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      redirect('/auth/login');
+    },
+  });
+
+  if (status === 'loading') return null;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex gap-8">
@@ -22,7 +32,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-              <p className="text-gray-500 dark:text-dark-muted text-sm mt-0.5">Welcome back, Alex! Here&apos;s what&apos;s happening.</p>
+              <p className="text-gray-500 dark:text-dark-muted text-sm mt-0.5">Welcome back, {session?.user?.name || 'Writer'}! Here&apos;s what&apos;s happening.</p>
             </div>
             <Link href="/write" className="btn-primary text-sm px-4 py-2 rounded-xl">
               <PenSquare className="w-4 h-4" />

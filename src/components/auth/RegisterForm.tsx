@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User, Flame } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 export function RegisterForm() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
@@ -34,10 +37,45 @@ export function RegisterForm() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setLoading(false);
-    toast.success('Account created! Welcome to Blogo 🎉');
-    setTimeout(() => router.push('/dashboard'), 1500);
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message || 'Registration failed. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      const result = await signIn('credentials', {
+        redirect: false,
+        email: form.email,
+        password: form.password,
+      });
+
+      if (result?.error) {
+        toast.error('Could not log in after registration.');
+      } else {
+        toast.success('Account created! Welcome to Blogo 🎉');
+        setTimeout(() => router.push('/dashboard'), 1500);
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -64,19 +102,38 @@ export function RegisterForm() {
       <div className="bg-white dark:bg-dark-card rounded-2xl shadow-xl border border-gray-100 dark:border-dark-border p-8">
         {/* Social */}
         <div className="grid grid-cols-2 gap-3 mb-6">
-          {[
-            { name: 'Google', icon: '🌐' },
-            { name: 'GitHub', icon: '⚡' },
-          ].map((p) => (
             <button
-              key={p.name}
-              onClick={() => toast.success(`${p.name} signup coming soon!`)}
+              key="Google"
+              type="button"
+              onClick={async () => {
+                try {
+                  const result = await signInWithPopup(auth, googleProvider);
+                  const token = await result.user.getIdToken();
+                  const res = await signIn('credentials', { firebaseToken: token, redirect: false });
+                  if (res?.error) toast.error('Sign-in failed');
+                  else {
+                    toast.success('Welcome! Redirecting...');
+                    setTimeout(() => router.push('/dashboard'), 1500);
+                  }
+                } catch (error: any) {
+                  console.error(error);
+                  toast.error(error?.message || 'Google sign-in closed or failed');
+                }
+              }}
               className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm font-medium text-gray-600 dark:text-dark-muted hover:bg-gray-50 dark:hover:bg-slate-700 transition-all"
             >
-              <span>{p.icon}</span>
-              {p.name}
+              <span>🌐</span>
+              Google
             </button>
-          ))}
+            <button
+              key="GitHub"
+              type="button"
+              onClick={() => signIn('github', { callbackUrl: '/dashboard' })}
+              className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm font-medium text-gray-600 dark:text-dark-muted hover:bg-gray-50 dark:hover:bg-slate-700 transition-all"
+            >
+              <span>⚡</span>
+              GitHub
+            </button>
         </div>
 
         <div className="relative mb-6">

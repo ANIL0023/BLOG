@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Flame, Twitter, Github, Linkedin, Mail, Rss } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const footerLinks = {
   Platform: [
@@ -38,6 +40,34 @@ const categories = [
 ];
 
 export function Footer() {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'Subscribed successfully!');
+        setEmail('');
+      } else {
+        toast.error(data.error || 'Failed to subscribe.');
+      }
+    } catch (error) {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <footer className="bg-gray-50 dark:bg-slate-900 border-t border-gray-200 dark:border-dark-border mt-20">
       {/* Newsletter */}
@@ -48,19 +78,24 @@ export function Footer() {
             <p className="text-white/80 mb-6">
               Get the best stories delivered to your inbox every week. No spam, ever.
             </p>
-            <form className="flex gap-3 max-w-md mx-auto" onSubmit={(e) => e.preventDefault()}>
+            <form className="flex gap-3 max-w-md mx-auto" onSubmit={handleSubscribe}>
               <input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
+                required
+                disabled={loading}
                 className="flex-1 px-4 py-3 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30
-                  placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                  placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-50"
               />
               <button
                 type="submit"
+                disabled={loading}
                 className="px-6 py-3 bg-white text-primary-700 font-semibold rounded-xl
-                  hover:bg-gray-100 transition-colors shrink-0"
+                  hover:bg-gray-100 transition-colors shrink-0 disabled:opacity-50"
               >
-                Subscribe
+                {loading ? 'Subscribing...' : 'Subscribe'}
               </button>
             </form>
             <p className="mt-3 text-xs text-white/60">

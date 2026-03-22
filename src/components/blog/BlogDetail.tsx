@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -9,6 +9,7 @@ import {
   Twitter, Linkedin, Link2, Check, Calendar
 } from 'lucide-react';
 import { type Blog, formatDate, formatNumber } from '@/lib/data';
+import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 
 interface BlogDetailProps {
@@ -16,20 +17,136 @@ interface BlogDetailProps {
 }
 
 export function BlogDetail({ blog }: BlogDetailProps) {
+  const { data: session } = useSession();
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [likeCount, setLikeCount] = useState(blog.likes);
   const [copied, setCopied] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followCount, setFollowCount] = useState(0);
 
-  const handleLike = () => {
-    setLiked(!liked);
-    setLikeCount((c) => (liked ? c - 1 : c + 1));
-    if (!liked) toast.success('Added to your liked articles!');
+  useEffect(() => {
+    // Initial load check for personal status if logged in
+    fetch('/api/user/bookmarks')
+      .then(res => res.json())
+      .then(bookmarks => {
+        if (Array.isArray(bookmarks)) {
+           setBookmarked(bookmarks.some(b => b._id === blog.id || b === blog.id));
+        }
+      }).catch(() => {});
+
+    // Fetch follow status
+    if (blog.author.id && !blog.author.id.includes('unknown')) {
+        fetch(`/api/user/follow?userId=${blog.author.id}`)
+            .then(res => res.json())
+            .then(data => {
+                setIsFollowing(data.isFollowing);
+                setFollowCount(data.followerCount);
+            }).catch(() => {});
+    }
+  }, [blog.id, blog.author.id]);
+
+  useEffect(() => {
+    // Increment views on mount
+    if (blog.id && !blog.id.includes('b')) { 
+       fetch(`/api/posts/${blog.id}/view`, { method: 'POST' }).catch(console.error);
+    }
+  }, [blog.id]);
+
+  const handleLike = async () => {
+    if (!session) {
+      toast.error('Join Blogo to appreciate this masterpiece and more!', {
+        duration: 5000,
+        icon: '❤️',
+        style: {
+          background: '#f43f5e',
+          color: '#fff',
+          fontWeight: '600',
+        }
+      });
+      return;
+    }
+
+    if (liked) return; 
+    
+    const originalCount = likeCount;
+    setLiked(true);
+    setLikeCount(prev => prev + 1);
+    
+    try {
+       const res = await fetch(`/api/posts/${blog.id}/like`, { method: 'POST' });
+       if (!res.ok) throw new Error();
+       toast.success('Added to your liked articles!');
+    } catch {
+       setLiked(false);
+       setLikeCount(originalCount);
+       toast.error('Failed to like article');
+    }
   };
 
-  const handleBookmark = () => {
-    setBookmarked(!bookmarked);
-    toast.success(bookmarked ? 'Removed from bookmarks' : 'Saved to bookmarks!');
+  const handleBookmark = async () => {
+    if (!session) {
+      toast.error('Join Blogo to save this for later and build your genius library!', {
+        duration: 5000,
+        icon: '🔖',
+        style: {
+          background: '#6366f1',
+          color: '#fff',
+          fontWeight: '600',
+        }
+      });
+      return;
+    }
+
+    const originalState = bookmarked;
+    const newState = !bookmarked;
+    setBookmarked(newState);
+    
+    try {
+       const res = await fetch('/api/user/bookmarks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postId: blog.id })
+       });
+       if (!res.ok) throw new Error();
+       toast.success(newState ? 'Saved to bookmarks!' : 'Removed from bookmarks');
+    } catch {
+       setBookmarked(originalState);
+       toast.error('Failed to update bookmarks');
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!session) {
+      toast.error('Join Blogo to follow your favorite authors and stay updated on their latest genius!', {
+        duration: 5000,
+        icon: '✨',
+        style: {
+          background: '#6366f1',
+          color: '#fff',
+          fontWeight: '600',
+        }
+      });
+      return;
+    }
+
+    try {
+       const res = await fetch('/api/user/follow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetUserId: blog.author.id })
+       });
+       const data = await res.json();
+       if (res.ok) {
+          setIsFollowing(data.isFollowing);
+          setFollowCount(data.followerCount);
+          toast.success(data.isFollowing ? `Following ${blog.author.name}` : `Unfollowed ${blog.author.name}`);
+       } else {
+          toast.error(data.error || 'Failed to follow');
+       }
+    } catch {
+       toast.error('Failed to follow');
+    }
   };
 
   const handleCopyLink = () => {
@@ -228,12 +345,16 @@ export function BlogDetail({ blog }: BlogDetailProps) {
                 </Link>
                 <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">{blog.author.category}</p>
               </div>
-              <Link
-                href={`/authors/${blog.author.id}`}
-                className="btn-primary text-sm px-4 py-2 rounded-lg"
+              <button
+                onClick={handleFollow}
+                className={`text-sm px-4 py-2 rounded-lg transition-all ${
+                    isFollowing 
+                    ? 'bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-600'
+                    : 'btn-primary'
+                }`}
               >
-                Follow
-              </Link>
+                {isFollowing ? 'Following' : 'Follow'}
+              </button>
             </div>
             <p className="mt-2 text-gray-600 dark:text-dark-muted text-sm leading-relaxed">{blog.author.bio}</p>
           </div>

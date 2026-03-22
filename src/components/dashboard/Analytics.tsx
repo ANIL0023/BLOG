@@ -1,28 +1,46 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Eye, Heart, Users, ArrowUp, ArrowDown } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
-const stats = [
-  { label: 'Total Views', value: '124,580', change: '+18.2%', up: true, icon: Eye, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-  { label: 'Total Likes', value: '8,432', change: '+12.5%', up: true, icon: Heart, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/20' },
-  { label: 'New Followers', value: '1,284', change: '+24.3%', up: true, icon: Users, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20' },
-  { label: 'Avg. Read Rate', value: '68%', change: '-2.1%', up: false, icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' },
-];
-
-const topArticles = [
-  { title: 'Mastering React Server Components', views: 12400, change: '+24%' },
-  { title: 'Advanced TypeScript Patterns', views: 9800, change: '+18%' },
-  { title: 'CSS Grid Mastery', views: 7600, change: '+12%' },
-  { title: 'Building Design Systems', views: 6200, change: '+9%' },
-  { title: 'Node.js Performance Guide', views: 4800, change: '+6%' },
-];
-
-const monthlyData = [40, 65, 45, 80, 60, 95, 70, 110, 85, 130, 100, 145];
+const monthlyData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export function Analytics() {
-  const maxVal = Math.max(...monthlyData);
+  const { data: session } = useSession();
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    if (session) {
+      fetch('/api/user/stats')
+        .then(res => res.json())
+        .then(resData => {
+          if (!resData.error) {
+            setData(resData);
+          }
+        });
+    }
+  }, [session]);
+
+  const stats = [
+    { label: 'Total Views', value: data?.totalViews?.toLocaleString() || '0', change: '+0%', up: true, icon: Eye, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    { label: 'Total Likes', value: data?.totalLikes?.toLocaleString() || '0', change: '+0%', up: true, icon: Heart, color: 'text-red-500', bg: 'bg-red-50 dark:bg-red-900/20' },
+    { label: 'New Followers', value: data?.followers?.toLocaleString() || '0', change: '+0%', up: true, icon: Users, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+    { label: 'Avg. Read Rate', value: '45%', change: '+0%', up: true, icon: TrendingUp, color: 'text-green-500', bg: 'bg-green-50 dark:bg-green-900/20' },
+  ];
+
+  const topArticles = data?.topArticles || [];
+  const monthlyData = data?.monthlyViews || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const trafficSources = data?.trafficSources || [
+    { source: 'Organic Search', pct: 0, color: 'bg-primary-500' },
+    { source: 'Social Media', pct: 0, color: 'bg-pink-500' },
+    { source: 'Direct', pct: 0, color: 'bg-blue-500' },
+    { source: 'Referrals', pct: 0, color: 'bg-green-500' },
+  ];
+
+  const maxVal = Math.max(...monthlyData, 1);
 
   return (
     <div className="space-y-6">
@@ -69,7 +87,7 @@ export function Analytics() {
 
           {/* Bar Chart */}
           <div className="flex items-end gap-2 h-40">
-            {monthlyData.map((val, i) => (
+            {monthlyData.map((val: number, i: number) => (
               <motion.div
                 key={i}
                 initial={{ height: 0 }}
@@ -82,7 +100,7 @@ export function Analytics() {
                   style={{ height: '100%' }}
                 />
                 <div className="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover:flex bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                  {val}k views
+                  {val.toLocaleString()} views
                 </div>
               </motion.div>
             ))}
@@ -98,7 +116,11 @@ export function Analytics() {
         <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-dark-border p-6 shadow-sm">
           <h3 className="font-bold text-gray-900 dark:text-white mb-5">Top Articles</h3>
           <div className="space-y-4">
-            {topArticles.map((article, i) => (
+            {topArticles.length === 0 ? (
+              <p className="text-gray-500 dark:text-dark-muted text-center py-6 text-sm">
+                No articles published yet.
+              </p>
+            ) : topArticles.map((article: any, i: number) => (
               <div key={i} className="flex items-start gap-3">
                 <span className="w-5 h-5 rounded-full gradient-bg text-white text-xs flex items-center justify-center font-bold shrink-0 mt-0.5">
                   {i + 1}
@@ -124,12 +146,7 @@ export function Analytics() {
       <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-dark-border p-6 shadow-sm">
         <h3 className="font-bold text-gray-900 dark:text-white mb-5">Traffic Sources</h3>
         <div className="space-y-3">
-          {[
-            { source: 'Organic Search', pct: 42, color: 'bg-primary-500' },
-            { source: 'Social Media', pct: 28, color: 'bg-pink-500' },
-            { source: 'Direct', pct: 18, color: 'bg-blue-500' },
-            { source: 'Referrals', pct: 12, color: 'bg-green-500' },
-          ].map((item) => (
+          {trafficSources.map((item: any) => (
             <div key={item.source} className="flex items-center gap-4">
               <span className="text-sm text-gray-600 dark:text-dark-muted w-32">{item.source}</span>
               <div className="flex-1 h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">

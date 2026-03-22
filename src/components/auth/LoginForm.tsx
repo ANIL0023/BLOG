@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, Flame } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -32,10 +35,19 @@ export function LoginForm() {
     if (!validate()) return;
 
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
+    const result = await signIn('credentials', {
+      redirect: false,
+      email,
+      password,
+    });
     setLoading(false);
-    toast.success('Welcome back! Redirecting to your dashboard...');
-    setTimeout(() => router.push('/dashboard'), 1500);
+
+    if (result?.error) {
+      toast.error('Invalid email or password');
+    } else {
+      toast.success('Welcome back! Redirecting to your dashboard...');
+      setTimeout(() => router.push('/dashboard'), 1500);
+    }
   };
 
   return (
@@ -60,19 +72,38 @@ export function LoginForm() {
       <div className="bg-white dark:bg-dark-card rounded-2xl shadow-xl border border-gray-100 dark:border-dark-border p-8">
         {/* Social Login */}
         <div className="grid grid-cols-2 gap-3 mb-6">
-          {[
-            { name: 'Google', icon: '🌐', color: 'hover:border-red-300 hover:text-red-600' },
-            { name: 'GitHub', icon: '⚡', color: 'hover:border-gray-500 hover:text-gray-800 dark:hover:text-white' },
-          ].map((provider) => (
             <button
-              key={provider.name}
-              onClick={() => toast.success(`${provider.name} login coming soon!`)}
-              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm font-medium text-gray-600 dark:text-dark-muted transition-all ${provider.color}`}
+              key="Google"
+              type="button"
+              onClick={async () => {
+                try {
+                  const result = await signInWithPopup(auth, googleProvider);
+                  const token = await result.user.getIdToken();
+                  const res = await signIn('credentials', { firebaseToken: token, redirect: false });
+                  if (res?.error) toast.error('Sign-in failed');
+                  else {
+                    toast.success('Welcome! Redirecting...');
+                    setTimeout(() => router.push('/dashboard'), 1500);
+                  }
+                } catch (error: any) {
+                  console.error(error);
+                  toast.error(error?.message || 'Google sign-in closed or failed');
+                }
+              }}
+              className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm font-medium text-gray-600 dark:text-dark-muted transition-all hover:border-red-300 hover:text-red-600"
             >
-              <span>{provider.icon}</span>
-              {provider.name}
+              <span>🌐</span>
+              Google
             </button>
-          ))}
+            <button
+              key="GitHub"
+              type="button"
+              onClick={() => signIn('github', { callbackUrl: '/dashboard' })}
+              className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm font-medium text-gray-600 dark:text-dark-muted transition-all hover:border-gray-500 hover:text-gray-800 dark:hover:text-white"
+            >
+              <span>⚡</span>
+              GitHub
+            </button>
         </div>
 
         <div className="relative mb-6">
@@ -120,7 +151,7 @@ export function LoginForm() {
               <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
               <span className="text-sm text-gray-600 dark:text-dark-muted">Remember me</span>
             </label>
-            <Link href="#" className="text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium">
+            <Link href="/auth/forgot-password" className="text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium">
               Forgot password?
             </Link>
           </div>

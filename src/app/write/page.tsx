@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import {
   Bold, Italic, Underline, List, ListOrdered, Quote,
@@ -10,7 +12,7 @@ import toast from 'react-hot-toast';
 
 const categories = ['Technology', 'Design', 'Business', 'AI & ML', 'Finance', 'Wellness', 'Science', 'Culture'];
 
-export default function WritePage() {
+function WriteEditor() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [excerpt, setExcerpt] = useState('');
@@ -18,6 +20,43 @@ export default function WritePage() {
   const [tags, setTags] = useState('');
   const [preview, setPreview] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [coverImage, setCoverImage] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('id');
+
+  useEffect(() => {
+    if (editId) {
+      fetch(`/api/posts/${editId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.error) {
+            setTitle(data.title || '');
+            setContent(data.content || '');
+            setExcerpt(data.excerpt || '');
+            setCategory(data.category || '');
+            setTags(data.tags || '');
+            setCoverImage(data.coverImage || '');
+          }
+        });
+    }
+  }, [editId]);
+
+  const { status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      router.push('/auth/login');
+    },
+  });
+
+  if (status === 'loading') {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
 
   const wordCount = content.split(/\s+/).filter(Boolean).length;
   const readingTime = Math.ceil(wordCount / 200);
@@ -29,14 +68,68 @@ export default function WritePage() {
     toast.success('Draft saved!');
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        setCoverImage(data.url);
+        toast.success('Image uploaded successfully!');
+      } else {
+        toast.error(data.message || 'Upload failed');
+      }
+    } catch (error) {
+      toast.error('An error occurred during upload.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handlePublish = async () => {
     if (!title.trim()) { toast.error('Please add a title'); return; }
     if (!content.trim()) { toast.error('Please add some content'); return; }
     if (!category) { toast.error('Please select a category'); return; }
+    
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setSaving(false);
-    toast.success('Article published successfully! 🎉');
+    try {
+      const url = editId ? `/api/posts/${editId}` : '/api/posts';
+      const method = editId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          content,
+          excerpt,
+          category,
+          tags,
+          coverImage,
+        }),
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(editId ? 'Article updated successfully! 🎉' : 'Article published successfully! 🎉');
+        setTimeout(() => router.push('/dashboard/blogs'), 1500);
+      } else {
+        toast.error(data.message || 'Failed to publish');
+      }
+    } catch (error) {
+      toast.error('An error occurred while publishing.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toolbar = [
@@ -85,7 +178,7 @@ export default function WritePage() {
             className="btn-primary text-sm px-4 py-2 rounded-xl"
           >
             <Send className="w-4 h-4" />
-            Publish
+            {editId ? 'Update' : 'Publish'}
           </button>
         </div>
       </div>
@@ -94,15 +187,19 @@ export default function WritePage() {
         {/* Editor */}
         <div className="space-y-4">
           {/* Cover image upload */}
-          <div
-            className="h-48 rounded-2xl border-2 border-dashed border-gray-300 dark:border-dark-border flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all group"
-            onClick={() => toast.success('Image upload coming soon!')}
-          >
-            <ImageIcon className="w-8 h-8 text-gray-300 dark:text-dark-muted group-hover:text-primary-500 transition-colors" />
-            <p className="text-sm text-gray-400 dark:text-dark-muted group-hover:text-primary-500 font-medium transition-colors">
-              Click to add a cover image
-            </p>
-          </div>
+          <label className="h-48 rounded-2xl border-2 border-dashed border-gray-300 dark:border-dark-border flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all group overflow-hidden relative">
+            <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+            {coverImage ? (
+              <img src={coverImage} alt="Cover" className="object-cover w-full h-full" />
+            ) : (
+              <>
+                <ImageIcon className="w-8 h-8 text-gray-300 dark:text-dark-muted group-hover:text-primary-500 transition-colors" />
+                <p className="text-sm text-gray-400 dark:text-dark-muted group-hover:text-primary-500 font-medium transition-colors">
+                  {uploading ? 'Uploading...' : 'Click or drop to add cover image'}
+                </p>
+              </>
+            )}
+          </label>
 
           {/* Title */}
           <textarea
@@ -247,5 +344,13 @@ You can use Markdown:
         </div>
       </div>
     </div>
+  );
+}
+
+export default function WritePage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-[60vh]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div></div>}>
+      <WriteEditor />
+    </Suspense>
   );
 }

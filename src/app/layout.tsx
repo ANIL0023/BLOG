@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { AuthProvider } from '@/components/providers/AuthProvider';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Toaster } from 'react-hot-toast';
@@ -43,26 +44,59 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1 pt-16">{children}</main>
-            <Footer />
-          </div>
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: 'var(--toast-bg)',
-                color: 'var(--toast-text)',
-                borderRadius: '12px',
-                border: '1px solid var(--toast-border)',
-                fontSize: '14px',
-                fontWeight: '500',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-              },
-            }}
-          />
+          <AuthProvider>
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <main className="flex-1 pt-16">{children}</main>
+              <Footer />
+            </div>
+            <Toaster
+              position="top-right"
+              gutter={8}
+              containerStyle={{
+                top: 40,
+                right: 20,
+                bottom: 40,
+                left: 20,
+              }}
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: 'var(--toast-bg, #fff)',
+                  color: 'var(--toast-text, #1e293b)',
+                  borderRadius: '16px',
+                  border: '1px solid var(--toast-border, rgba(0,0,0,0.05))',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  padding: '12px 20px',
+                  boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+                  backdropFilter: 'blur(8px)',
+                },
+                success: {
+                  style: {
+                    background: '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                  },
+                  iconTheme: {
+                    primary: '#fff',
+                    secondary: '#10b981',
+                  },
+                },
+                error: {
+                  style: {
+                    background: '#ef4444',
+                    color: '#fff',
+                    border: 'none',
+                  },
+                  iconTheme: {
+                    primary: '#fff',
+                    secondary: '#ef4444',
+                  },
+                },
+              }}
+            />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

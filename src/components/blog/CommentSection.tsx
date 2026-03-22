@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Heart, MessageCircle, Send, ChevronDown } from 'lucide-react';
-import { mockComments, authors, formatDate, type Comment } from '@/lib/data';
+import { Heart, MessageCircle, Send, ChevronDown, Loader2 } from 'lucide-react';
+import { formatDate, type Comment as CommentType } from '@/lib/data';
+import { useSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
 
 interface CommentSectionProps {
@@ -13,56 +14,77 @@ interface CommentSectionProps {
 }
 
 export function CommentSection({ blogId, commentCount }: CommentSectionProps) {
-  const [comments, setComments] = useState<Comment[]>(
-    mockComments.filter((c) => c.blogId === blogId)
-  );
+  const { data: session } = useSession();
+  const [comments, setComments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
 
-  const handleSubmitComment = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (blogId && !blogId.includes('b')) {
+       fetch(`/api/posts/${blogId}/comments`)
+         .then(res => res.json())
+         .then(data => {
+            if (Array.isArray(data)) setComments(data);
+            setLoading(false);
+         })
+         .catch(() => setLoading(false));
+    } else {
+       setLoading(false);
+    }
+  }, [blogId]);
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
+    if (!session) { toast.error('Please sign in to comment'); return; }
 
-    const comment: Comment = {
-      id: `c${Date.now()}`,
-      blogId,
-      author: authors[0],
-      content: newComment,
-      publishedAt: new Date().toISOString().split('T')[0],
-      likes: 0,
-      replies: [],
-    };
-
-    setComments((prev) => [comment, ...prev]);
-    setNewComment('');
-    toast.success('Comment posted!');
+    try {
+       const res = await fetch(`/api/posts/${blogId}/comments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: newComment })
+       });
+       const data = await res.json();
+       if (res.ok) {
+          setComments((prev) => [data, ...prev]);
+          setNewComment('');
+          toast.success('Comment posted!');
+       }
+    } catch {
+       toast.error('Failed to post comment');
+    }
   };
 
-  const handleSubmitReply = (commentId: string) => {
+  const handleSubmitReply = async (commentId: string) => {
     if (!replyText.trim()) return;
+    if (!session) { toast.error('Please sign in to reply'); return; }
 
-    const reply: Comment = {
-      id: `r${Date.now()}`,
-      blogId,
-      author: authors[0],
-      content: replyText,
-      publishedAt: new Date().toISOString().split('T')[0],
-      likes: 0,
-    };
-
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId
-          ? { ...c, replies: [...(c.replies || []), reply] }
-          : c
-      )
-    );
-    setReplyText('');
-    setReplyTo(null);
-    setExpandedReplies((prev) => new Set(Array.from(prev).concat(commentId)));
-    toast.success('Reply posted!');
+    try {
+       const res = await fetch(`/api/posts/${blogId}/comments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: replyText, parentId: commentId })
+       });
+       const data = await res.json();
+       if (res.ok) {
+          setComments((prev) =>
+            prev.map((c) =>
+              c.id === commentId
+                ? { ...c, replies: [...(c.replies || []), data] }
+                : c
+            )
+          );
+          setReplyText('');
+          setReplyTo(null);
+          setExpandedReplies((prev) => new Set(Array.from(prev).concat(commentId)));
+          toast.success('Reply posted!');
+       }
+    } catch {
+       toast.error('Failed to post reply');
+    }
   };
 
   const toggleReplies = (commentId: string) => {
@@ -86,13 +108,19 @@ export function CommentSection({ blogId, commentCount }: CommentSectionProps) {
       {/* Comment Form */}
       <div className="mb-10 p-5 rounded-2xl bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-sm">
         <div className="flex items-start gap-3">
-          <Image
-            src={authors[0].avatar}
-            alt="You"
-            width={40}
-            height={40}
-            className="rounded-full bg-gray-100 dark:bg-slate-700 mt-1"
-          />
+          {session?.user?.image ? (
+            <Image
+                src={session.user.image}
+                alt={session.user.name || 'You'}
+                width={40}
+                height={40}
+                className="rounded-full bg-gray-100 dark:bg-slate-700 mt-1"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-700 mt-1 flex items-center justify-center">
+               <MessageCircle className="w-5 h-5 text-gray-400" />
+            </div>
+          )}
           <form onSubmit={handleSubmitComment} className="flex-1">
             <textarea
               value={newComment}
@@ -137,22 +165,22 @@ export function CommentSection({ blogId, commentCount }: CommentSectionProps) {
           >
             {/* Comment Author */}
             <div className="flex items-start gap-3 mb-3">
-              <Image
-                src={comment.author.avatar}
-                alt={comment.author.name}
-                width={40}
-                height={40}
-                className="rounded-full bg-gray-100 dark:bg-slate-700"
-              />
+                <Image
+                  src={comment.author?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.author?.name || 'anon'}`}
+                  alt={comment.author?.name || 'User'}
+                  width={40}
+                  height={40}
+                  className="rounded-full bg-gray-100 dark:bg-slate-700"
+                />
               <div className="flex-1">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <span className="font-semibold text-gray-900 dark:text-white text-sm">
-                      {comment.author.name}
+                      {comment.author?.name || 'Deleted User'}
                     </span>
                     <span className="mx-2 text-gray-300 dark:text-dark-border">•</span>
                     <span className="text-xs text-gray-400 dark:text-dark-muted">
-                      {formatDate(comment.publishedAt)}
+                      {formatDate(comment.createdAt || comment.publishedAt)}
                     </span>
                   </div>
                 </div>
@@ -189,13 +217,15 @@ export function CommentSection({ blogId, commentCount }: CommentSectionProps) {
                 {/* Reply Form */}
                 {replyTo === comment.id && (
                   <div className="mt-4 flex items-start gap-2">
-                    <Image
-                      src={authors[0].avatar}
-                      alt="You"
-                      width={28}
-                      height={28}
-                      className="rounded-full bg-gray-100 dark:bg-slate-700 mt-1"
-                    />
+                    {session?.user?.image && (
+                        <Image
+                            src={session.user.image}
+                            alt="You"
+                            width={28}
+                            height={28}
+                            className="rounded-full bg-gray-100 dark:bg-slate-700 mt-1"
+                        />
+                    )}
                     <div className="flex-1">
                       <textarea
                         value={replyText}
@@ -227,11 +257,11 @@ export function CommentSection({ blogId, commentCount }: CommentSectionProps) {
                 {/* Nested Replies */}
                 {expandedReplies.has(comment.id) && comment.replies && comment.replies.length > 0 && (
                   <div className="mt-4 space-y-4 pl-4 border-l-2 border-gray-100 dark:border-dark-border">
-                    {comment.replies.map((reply) => (
+                    {comment.replies.map((reply: any) => (
                       <div key={reply.id} className="flex items-start gap-3">
                         <Image
-                          src={reply.author.avatar}
-                          alt={reply.author.name}
+                          src={reply.author?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${reply.author?.name || 'anon'}`}
+                          alt={reply.author?.name || 'User'}
                           width={32}
                           height={32}
                           className="rounded-full bg-gray-100 dark:bg-slate-700"
@@ -239,10 +269,10 @@ export function CommentSection({ blogId, commentCount }: CommentSectionProps) {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold text-gray-900 dark:text-white text-xs">
-                              {reply.author.name}
+                              {reply.author?.name || 'User'}
                             </span>
                             <span className="text-xs text-gray-400 dark:text-dark-muted">
-                              {formatDate(reply.publishedAt)}
+                              {formatDate(reply.createdAt || reply.publishedAt)}
                             </span>
                           </div>
                           <p className="text-gray-700 dark:text-dark-text text-sm leading-relaxed">
