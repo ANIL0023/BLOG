@@ -43,9 +43,28 @@ export async function POST(req: Request) {
     });
 
 
+    // Robust base URL detection
+    const origin = req.headers.get('origin');
+    const referer = req.headers.get('referer');
     const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
     const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
-    const baseUrl = `${proto}://${host}`;
+    
+    let baseUrl = origin;
+    if (!baseUrl && referer) {
+        try { baseUrl = new URL(referer).origin; } catch {}
+    }
+    if (!baseUrl || baseUrl.includes('localhost')) {
+      // If we are likely on Vercel (or production), use the Vercel URL if available
+      if (process.env.VERCEL_URL) {
+        baseUrl = `https://${process.env.VERCEL_URL}`;
+      } else if (!baseUrl) {
+        baseUrl = host ? `${proto}://${host}` : (process.env.NEXTAUTH_URL?.replace(/\/$/, '') || 'http://localhost:3000');
+      }
+    }
+    
+    // Ensure no trailing slash
+    baseUrl = baseUrl?.replace(/\/$/, '');
+    
     const resetUrl = `${baseUrl}/auth/reset-password?token=${token}&email=${email}`;
 
     const mailOptions = {
