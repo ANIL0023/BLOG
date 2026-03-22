@@ -139,7 +139,7 @@ export function DashboardSidebar() {
       </aside>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-lg border-t border-gray-200 dark:border-dark-border px-2 py-2 flex items-center justify-around z-40">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-lg border-t border-gray-200 dark:border-dark-border px-2 pb-safe pt-2 flex items-center justify-around z-40">
         {navItems.slice(0, 5).map(({ href, icon: Icon, label }) => {
           const active = pathname === href;
           return (

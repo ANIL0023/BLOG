@@ -30,27 +30,27 @@
     touch-action: manipulation;
   }
 
-  /* Instant Feedback for all interactive elements */
-  a, button, [role="button"] {
-    @apply transition-all active:scale-[0.96] active:opacity-80;
-    touch-action: manipulation;
+  /* Instant Feedback and Safe Area for all interactive elements */
+  @media (hover: hover) {
+    .btn-primary:hover {
+      @apply from-primary-700 to-blue-700 shadow-primary-500/40 scale-[1.02];
+    }
+    .btn-secondary:hover {
+      @apply bg-gray-200 dark:bg-slate-700 scale-[1.02];
+    }
+    .card:hover {
+      @apply shadow-xl -translate-y-1;
+    }
   }
 
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  /* Enhanced Active (Pressed) States - Universal on Touch */
+  a:active, button:active, [role="button"]:active {
+    @apply scale-[0.96] opacity-90 brightness-95 !duration-75;
+    transition: transform 0.1s cubic-bezier(0, 0, 0.2, 1);
   }
 
-  ::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-dark-bg;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-primary-500 rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary-600;
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
@@ -74,19 +74,19 @@
   }
 
   .card {
-    @apply bg-white dark:bg-dark-card rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-dark-border;
+    @apply bg-white dark:bg-dark-card rounded-2xl shadow-sm transition-all duration-300 border border-gray-100 dark:border-dark-border;
   }
 
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 
-    bg-gradient-to-r from-primary-600 to-blue-600 hover:from-primary-700 hover:to-blue-700
-    shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:scale-[1.02] active:scale-[0.98];
+    bg-gradient-to-r from-primary-600 to-blue-600
+    shadow-lg shadow-primary-500/25 active:scale-[0.98];
   }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200
-    bg-gray-100 dark:bg-dark-card text-gray-700 dark:text-dark-text hover:bg-gray-200 dark:hover:bg-slate-700
-    border border-gray-200 dark:border-dark-border hover:scale-[1.02] active:scale-[0.98];
+    bg-gray-100 dark:bg-dark-card text-gray-700 dark:text-dark-text
+    border border-gray-200 dark:border-dark-border active:scale-[0.98];
   }
 
   .input-field {
