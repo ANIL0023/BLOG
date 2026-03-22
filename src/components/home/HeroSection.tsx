@@ -41,7 +41,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
-          className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-6"
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight"
         >
           Share your{' '}
           <span className="relative">
@@ -69,7 +69,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="text-xl md:text-2xl text-white/80 max-w-3xl mx-auto mb-10 leading-relaxed"
+          className="text-lg md:text-xl lg:text-2xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed px-4"
         >
           Write, discover, and connect with the most insightful minds on the internet.
           From technology to wellness, find stories that matter.
@@ -106,7 +106,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.4 }}
-          className="grid grid-cols-3 gap-4 md:gap-8 max-w-2xl mx-auto"
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-8 max-w-2xl mx-auto"
         >
           {stats.map(({ label, value, icon: Icon }) => (
             <div key={label} className="glass rounded-2xl p-4 text-white text-center">

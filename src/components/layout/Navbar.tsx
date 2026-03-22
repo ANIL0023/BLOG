@@ -189,25 +189,38 @@ export function Navbar() {
         </div>
 
         {/* Mobile Menu */}
-        {mobileOpen && (
-          <div className="md:hidden bg-white dark:bg-dark-bg border-t border-gray-200 dark:border-dark-border px-4 py-4 space-y-1">
-            {navLinks.map((link) => (
+        <div className={`md:hidden fixed inset-x-0 top-16 bg-white/95 dark:bg-dark-bg/95 backdrop-blur-xl border-t border-gray-200 dark:border-dark-border transition-all duration-300 ease-in-out origin-top overflow-hidden
+          ${mobileOpen ? 'max-h-[85vh] opacity-100 shadow-2xl' : 'max-h-0 opacity-0'}`}
+        >
+          <div className="px-4 py-6 space-y-1 max-h-[calc(85vh-4rem)] overflow-y-auto">
+            {navLinks.map((link, i) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center gap-2 px-4 py-3 rounded-xl text-gray-700 dark:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-card font-medium transition-colors"
+                style={{ transitionDelay: `${i * 50}ms` }}
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-medium transition-all ${
+                  pathname === link.href
+                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                    : 'text-gray-700 dark:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-card'
+                } ${mobileOpen ? 'translate-x-0' : '-translate-x-4'}`}
               >
                 {link.label}
               </Link>
             ))}
-            <div className="pt-3 border-t border-gray-200 dark:border-dark-border flex flex-col gap-2">
-              <Link href="/write" className="btn-primary flex-1 text-sm py-2.5 rounded-xl">
-                <PenSquare className="w-4 h-4" /> Write
+            <div className="pt-4 border-t border-gray-100 dark:border-dark-border mt-4 flex flex-col gap-3">
+              <Link 
+                href="/write" 
+                className={`btn-primary flex-1 text-sm py-3.5 rounded-2xl shadow-lg shadow-primary-500/20 transition-all ${mobileOpen ? 'scale-100' : 'scale-95'}`}
+              >
+                <PenSquare className="w-4 h-4 ml-1" /> Write Article
               </Link>
               {status === 'authenticated' ? (
                 <>
-                  <Link href="/dashboard" className="btn-secondary flex-1 text-sm py-2.5 rounded-xl">
-                    <User className="w-4 h-4" /> Dashboard
+                  <Link 
+                    href="/dashboard" 
+                    className={`btn-secondary flex-1 text-sm py-3.5 rounded-2xl transition-all ${mobileOpen ? 'scale-100' : 'scale-95'}`}
+                  >
+                    <User className="w-4 h-4" /> Go to Dashboard
                   </Link>
                   <button
                     onClick={async () => {
@@ -222,18 +235,26 @@ export function Navbar() {
                         toast.error('Sign out failed', { id: toastId });
                       }
                     }}
-                    className="flex-1 text-sm py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 text-sm py-3.5 rounded-2xl border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2"
                   >
                     <LogOut className="w-4 h-4" /> Sign Out
                   </button>
                 </>
               ) : (
-                <Link href="/auth/login" className="btn-secondary flex-1 text-sm py-2.5 rounded-xl">
-                  Sign In
+                <Link href="/auth/login" className="btn-secondary flex-1 text-sm py-3.5 rounded-2xl">
+                  Sign In to Continue
                 </Link>
               )}
             </div>
           </div>
+        </div>
+
+        {/* Backdrop for mobile */}
+        {mobileOpen && (
+          <div 
+            className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
         )}
       </nav>
 

@@ -117,7 +117,11 @@ export function RegisterForm() {
                   }
                 } catch (error: any) {
                   console.error(error);
-                  toast.error(error?.message || 'Google sign-in closed or failed');
+                  if (error?.code === 'auth/unauthorized-domain') {
+                    toast.error('Domain not authorized! Please add this domain to Firebase Console settings.', { duration: 6000 });
+                  } else {
+                    toast.error(error?.message || 'Google sign-in closed or failed');
+                  }
                 }
               }}
               className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm font-medium text-gray-600 dark:text-dark-muted hover:bg-gray-50 dark:hover:bg-slate-700 transition-all"
