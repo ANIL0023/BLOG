@@ -37,9 +37,11 @@ function mapPostToBlog(p: any) {
 }
 
 export default async function HomePage() {
-  const featuredRaw = await getDbFeaturedBlogs();
-  const trendingRaw = await getDbTrendingBlogs(6);
-  const recentRaw = await getDbRecentBlogs(6);
+  const [featuredRaw, trendingRaw, recentRaw] = await Promise.all([
+    getDbFeaturedBlogs(),
+    getDbTrendingBlogs(6),
+    getDbRecentBlogs(6),
+  ]);
 
   const featured = featuredRaw.map(mapPostToBlog);
   const trending = trendingRaw.map(mapPostToBlog);

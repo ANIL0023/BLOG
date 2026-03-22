@@ -38,13 +38,13 @@ export function HeroSection() {
 
         {/* Headline */}
         <motion.h1
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight"
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight text-balance"
         >
           Share your{' '}
-          <span className="relative">
+          <span className="relative inline-block">
             <span className="text-yellow-300 drop-shadow-lg">Genius</span>
             <svg
               className="absolute -bottom-2 left-0 w-full"
@@ -66,10 +66,10 @@ export function HeroSection() {
 
         {/* Subheading */}
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          className="text-lg md:text-xl lg:text-2xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed px-4"
+          transition={{ duration: 0.8, delay: 0.1, ease: 'easeOut' }}
+          className="text-lg md:text-xl lg:text-2xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed px-4 text-balance"
         >
           Write, discover, and connect with the most insightful minds on the internet.
           From technology to wellness, find stories that matter.
@@ -77,16 +77,16 @@ export function HeroSection() {
 
         {/* CTA Buttons */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
         >
           <Link
             href="/blogs"
             className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-white text-primary-700
               font-bold text-lg shadow-2xl hover:shadow-white/25 hover:scale-[1.02] active:scale-[0.98]
-              transition-all duration-200"
+              transition-all duration-300"
           >
             Start Exploring
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -95,7 +95,7 @@ export function HeroSection() {
             href="/write"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl glass text-white
               font-bold text-lg hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98]
-              transition-all duration-200 border border-white/30"
+              transition-all duration-300 border border-white/30"
           >
             Start Writing
           </Link>
@@ -103,13 +103,13 @@ export function HeroSection() {
 
         {/* Stats */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
           className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-8 max-w-2xl mx-auto"
         >
           {stats.map(({ label, value, icon: Icon }) => (
-            <div key={label} className="glass rounded-2xl p-4 text-white text-center">
+            <div key={label} className="glass rounded-2xl p-4 text-white text-center hover:bg-white/10 transition-colors">
               <Icon className="w-5 h-5 mx-auto mb-2 text-yellow-300" />
               <div className="text-2xl md:text-3xl font-extrabold">{value}</div>
               <div className="text-xs md:text-sm text-white/70 mt-1">{label}</div>
