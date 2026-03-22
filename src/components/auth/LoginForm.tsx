@@ -88,7 +88,8 @@ export function LoginForm() {
                 } catch (error: any) {
                   console.error(error);
                   if (error?.code === 'auth/unauthorized-domain') {
-                    toast.error('Domain not authorized! Please add this domain to Firebase Console settings.', { duration: 6000 });
+                    const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'this domain';
+                    toast.error(`Domain not authorized! Please add "${currentHost}" to your Firebase Authorized Domains in Settings.`, { duration: 8000 });
                   } else {
                     toast.error(error?.message || 'Google sign-in closed or failed');
                   }
