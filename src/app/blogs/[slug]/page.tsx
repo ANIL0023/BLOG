@@ -12,6 +12,9 @@ interface Props {
   params: { slug: string };
 }
 
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+
 async function fetchBlog(slug: string): Promise<Blog | undefined> {
   // Try finding it in DB first if it's a valid Mongo ObjectId
   if (mongoose.Types.ObjectId.isValid(slug)) {

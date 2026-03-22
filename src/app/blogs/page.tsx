@@ -62,7 +62,7 @@ export default function BlogsPage() {
       case 'trending': return result.filter((b) => b.trending).concat(result.filter((b) => !b.trending));
       default: return result.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
     }
-  }, [search, selectedCategory, sortBy]);
+  }, [search, selectedCategory, sortBy, dbBlogs]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
