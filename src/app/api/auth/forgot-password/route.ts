@@ -57,8 +57,9 @@ export async function POST(req: Request) {
       // If we are likely on Vercel (or production), use the Vercel URL if available
       if (process.env.VERCEL_URL) {
         baseUrl = `https://${process.env.VERCEL_URL}`;
-      } else if (!baseUrl) {
-        baseUrl = host ? `${proto}://${host}` : (process.env.NEXTAUTH_URL?.replace(/\/$/, '') || 'http://localhost:3000');
+      } else {
+        // ULTIMATE FALLBACK: the user's verified production domain
+        baseUrl = 'https://blog-w273.vercel.app';
       }
     }
     
