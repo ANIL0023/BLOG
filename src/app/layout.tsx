@@ -5,6 +5,8 @@ import { AuthProvider } from '@/components/providers/AuthProvider';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Toaster } from 'react-hot-toast';
+import { ProgressBar } from '@/components/ui/ProgressBar';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: {
@@ -45,6 +47,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
+            <Suspense fallback={null}>
+              <ProgressBar />
+            </Suspense>
             <div className="min-h-screen flex flex-col">
               <Navbar />
               <main className="flex-1 pt-16">{children}</main>
