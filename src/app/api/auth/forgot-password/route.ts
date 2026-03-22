@@ -43,7 +43,10 @@ export async function POST(req: Request) {
     });
 
 
-    const resetUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/auth/reset-password?token=${token}&email=${email}`;
+    const host = req.headers.get('host');
+    const protocol = host?.includes('localhost') ? 'http' : 'https';
+    const baseUrl = host ? `${protocol}://${host}` : (process.env.NEXTAUTH_URL || 'http://localhost:3000');
+    const resetUrl = `${baseUrl}/auth/reset-password?token=${token}&email=${email}`;
 
     const mailOptions = {
       from: `"Blogo Support" <${process.env.EMAIL_USER}>`,
