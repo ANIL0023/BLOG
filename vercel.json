@@ -1,0 +1,5 @@
+{
+  "env": {
+    "NEXTAUTH_URL": "https://blog-w273.vercel.app"
+  }
+}

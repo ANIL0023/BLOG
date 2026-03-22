@@ -43,28 +43,15 @@ export async function POST(req: Request) {
     });
 
 
-    // Robust base URL detection
-    const origin = req.headers.get('origin');
-    const referer = req.headers.get('referer');
-    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-    const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+    // PRODUCTION URL - always use the verified domain
+    const PRODUCTION_URL = 'https://blog-w273.vercel.app';
     
-    let baseUrl = origin;
-    if (!baseUrl && referer) {
-        try { baseUrl = new URL(referer).origin; } catch {}
-    }
-    if (!baseUrl || baseUrl.includes('localhost')) {
-      // If we are likely on Vercel (or production), use the Vercel URL if available
-      if (process.env.VERCEL_URL) {
-        baseUrl = `https://${process.env.VERCEL_URL}`;
-      } else {
-        // ULTIMATE FALLBACK: the user's verified production domain
-        baseUrl = 'https://blog-w273.vercel.app';
-      }
-    }
+    // Detect if running on localhost
+    const host = req.headers.get('host') || '';
+    const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
     
-    // Ensure no trailing slash
-    baseUrl = baseUrl?.replace(/\/$/, '');
+    // Use localhost only when actually running locally, otherwise always production
+    const baseUrl = isLocalhost ? `http://${host}` : PRODUCTION_URL;
     
     const resetUrl = `${baseUrl}/auth/reset-password?token=${token}&email=${email}`;
 
@@ -99,13 +86,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ 
         message: 'If an account exists, a reset link has been sent.',
         warning: 'Email delivery failed. Please check your Gmail credentials.',
-        simulatedUrl: resetUrl
+        ...(isLocalhost ? { simulatedUrl: resetUrl } : {})
       });
     }
 
     return NextResponse.json({ 
       message: 'Password reset link sent! Check your email.',
-      simulatedUrl: resetUrl
+      ...(isLocalhost ? { simulatedUrl: resetUrl } : {})
     });
   } catch (error) {
     console.error('Forgot password error:', error);
