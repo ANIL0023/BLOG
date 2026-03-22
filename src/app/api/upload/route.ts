@@ -35,14 +35,19 @@ export async function POST(request: Request) {
     });
 
     const result = uploadResponse as any;
+    console.log('Cloudinary upload success:', result.secure_url);
 
     return NextResponse.json({ 
       success: true, 
       url: result.secure_url 
     });
 
-  } catch (error) {
-    console.error('Cloudinary Upload Error:', error);
-    return NextResponse.json({ success: false, message: 'Upload failed' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Cloudinary Upload Error Details:', error);
+    return NextResponse.json({ 
+      success: false, 
+      message: error.message || 'Upload failed',
+      error: error
+    }, { status: 500 });
   }
 }
