@@ -43,9 +43,9 @@ export async function POST(req: Request) {
     });
 
 
-    const host = req.headers.get('host');
-    const protocol = host?.includes('localhost') ? 'http' : 'https';
-    const baseUrl = host ? `${protocol}://${host}` : (process.env.NEXTAUTH_URL || 'http://localhost:3000');
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+    const baseUrl = `${proto}://${host}`;
     const resetUrl = `${baseUrl}/auth/reset-password?token=${token}&email=${email}`;
 
     const mailOptions = {

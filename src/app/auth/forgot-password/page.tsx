@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
               <p className="text-sm text-gray-500 dark:text-dark-muted mb-6">
                 We sent a password reset link to <strong>{email}</strong>
               </p>
-              {resetUrl && (
+              {resetUrl && typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
                   <div className="mb-6 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl text-left">
                       <p className="text-xs font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-2">Simulated Link (Local Dev):</p>
                       <a href={resetUrl} className="text-sm text-blue-600 dark:text-blue-400 break-all underline">
