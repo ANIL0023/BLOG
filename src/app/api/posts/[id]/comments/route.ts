@@ -1,6 +1,7 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db';
 import Comment from '@/models/Comment';
 import User from '@/models/User';
