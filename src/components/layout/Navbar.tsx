@@ -177,6 +177,24 @@ export function Navbar() {
               >
                 <Search className="w-5 h-5" />
               </button>
+              
+              {status === 'authenticated' ? (
+                <Link href="/dashboard" className="w-9 h-9 flex items-center justify-center rounded-lg overflow-hidden border border-gray-200 dark:border-dark-border">
+                  {session.user?.image ? (
+                    <img src={session.user.image} alt="User" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-5 h-5 text-gray-600 dark:text-dark-muted" />
+                  )}
+                </Link>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-primary-600 text-white shadow-lg shadow-primary-500/30"
+                >
+                  <User className="w-5 h-5" />
+                </Link>
+              )}
+
               <ThemeToggle />
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
