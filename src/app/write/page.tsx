@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
@@ -24,6 +24,7 @@ function WriteEditor() {
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editId = searchParams.get('id');
 
   useEffect(() => {
@@ -62,10 +63,42 @@ function WriteEditor() {
   const readingTime = Math.ceil(wordCount / 200);
 
   const handleSaveDraft = async () => {
+    if (!title.trim()) { toast.error('Please add a title'); return; }
+    
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setSaving(false);
-    toast.success('Draft saved!');
+    try {
+      const url = editId ? `/api/posts/${editId}` : '/api/posts';
+      const method = editId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          content,
+          excerpt,
+          category,
+          tags,
+          coverImage,
+          isPublished: false,
+        }),
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Draft saved successfully! 📝');
+        const savedPost = editId ? data : data.data;
+        if (!editId && savedPost?._id) {
+          router.push(`/write?id=${savedPost._id}`);
+        }
+      } else {
+        toast.error(data.message || data.error || 'Failed to save draft');
+      }
+    } catch (error) {
+      toast.error('An error occurred while saving draft.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,7 +156,7 @@ function WriteEditor() {
         toast.success(editId ? 'Article updated successfully! 🎉' : 'Article published successfully! 🎉');
         setTimeout(() => router.push('/dashboard/blogs'), 1500);
       } else {
-        toast.error(data.message || 'Failed to publish');
+        toast.error(data.message || data.error || 'Failed to publish');
       }
     } catch (error) {
       toast.error('An error occurred while publishing.');
@@ -132,18 +165,42 @@ function WriteEditor() {
     }
   };
 
+  const insertMarkdown = (prefix: string, suffix: string = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+
+    const newContent = `${before}${prefix}${selectedText}${suffix}${after}`;
+    setContent(newContent);
+
+    // Reset focus and selection
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + prefix.length,
+        end + prefix.length
+      );
+    }, 0);
+  };
+
   const toolbar = [
-    { icon: Bold, action: () => {}, title: 'Bold' },
-    { icon: Italic, action: () => {}, title: 'Italic' },
-    { icon: Underline, action: () => {}, title: 'Underline' },
+    { icon: Bold, action: () => insertMarkdown('**', '**'), title: 'Bold' },
+    { icon: Italic, action: () => insertMarkdown('*', '*'), title: 'Italic' },
+    { icon: Underline, action: () => insertMarkdown('<u>', '</u>'), title: 'Underline' },
     { type: 'divider' },
-    { icon: List, action: () => {}, title: 'Bullet List' },
-    { icon: ListOrdered, action: () => {}, title: 'Numbered List' },
-    { icon: Quote, action: () => {}, title: 'Blockquote' },
+    { icon: List, action: () => insertMarkdown('\n- '), title: 'Bullet List' },
+    { icon: ListOrdered, action: () => insertMarkdown('\n1. '), title: 'Numbered List' },
+    { icon: Quote, action: () => insertMarkdown('\n> '), title: 'Blockquote' },
     { type: 'divider' },
-    { icon: Code, action: () => {}, title: 'Code Block' },
-    { icon: Link2, action: () => {}, title: 'Insert Link' },
-    { icon: ImageIcon, action: () => toast.success('Image upload coming soon!'), title: 'Insert Image' },
+    { icon: Code, action: () => insertMarkdown('```\n', '\n```'), title: 'Code Block' },
+    { icon: Link2, action: () => insertMarkdown('[', '](url)'), title: 'Insert Link' },
+    { icon: ImageIcon, action: () => insertMarkdown('![alt text](', ')'), title: 'Insert Image URL' },
   ];
 
   return (
@@ -250,6 +307,7 @@ function WriteEditor() {
             </div>
           ) : (
             <textarea
+              ref={textareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Start writing your story... 

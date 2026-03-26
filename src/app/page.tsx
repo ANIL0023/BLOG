@@ -6,6 +6,8 @@ import { TopAuthors } from '@/components/home/TopAuthors';
 import { RecentArticles } from '@/components/home/RecentArticles';
 import { getDbFeaturedBlogs, getDbTrendingBlogs, getDbRecentBlogs } from '@/lib/db-queries';
 
+export const revalidate = 60; // ISR: regenerate every 60s
+
 function mapPostToBlog(p: any) {
   return {
     id: p._id.toString(),

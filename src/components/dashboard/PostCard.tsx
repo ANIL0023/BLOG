@@ -35,6 +35,11 @@ export function PostCard({ post }: { post: any }) {
              <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400">
                 {post.category}
              </span>
+             {!post.isPublished && (
+               <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
+                 Draft
+               </span>
+             )}
              <span className="text-xs text-gray-400 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
                 {new Date(post.createdAt).toLocaleDateString()}

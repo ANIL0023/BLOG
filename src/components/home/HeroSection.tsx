@@ -1,6 +1,3 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, TrendingUp, Users } from 'lucide-react';
 
@@ -26,23 +23,13 @@ export function HeroSection() {
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-20">
         {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-white/90 text-sm font-medium mb-8"
-        >
+        <div className="animate-fadeInUp inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-white/90 text-sm font-medium mb-8">
           <Sparkles className="w-4 h-4 text-yellow-300" />
           The home of great ideas and brilliant minds
-        </motion.div>
+        </div>
 
         {/* Headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight text-balance"
-        >
+        <h1 className="animate-fadeInUp hero-delay-1 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight text-balance">
           Share your{' '}
           <span className="relative inline-block">
             <span className="text-yellow-300 drop-shadow-lg">Genius</span>
@@ -62,26 +49,16 @@ export function HeroSection() {
           </span>
           <br />
           with the World
-        </motion.h1>
+        </h1>
 
         {/* Subheading */}
-        <motion.p
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1, ease: 'easeOut' }}
-          className="text-lg md:text-xl lg:text-2xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed px-4 text-balance"
-        >
+        <p className="animate-fadeInUp hero-delay-2 text-lg md:text-xl lg:text-2xl text-white/80 max-w-2xl mx-auto mb-10 leading-relaxed px-4 text-balance">
           Write, discover, and connect with the most insightful minds on the internet.
           From technology to wellness, find stories that matter.
-        </motion.p>
+        </p>
 
         {/* CTA Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
-        >
+        <div className="animate-fadeInUp hero-delay-2 flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
           <Link
             href="/blogs"
             className="group inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-white text-primary-700
@@ -99,15 +76,10 @@ export function HeroSection() {
           >
             Start Writing
           </Link>
-        </motion.div>
+        </div>
 
         {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-8 max-w-2xl mx-auto"
-        >
+        <div className="animate-scaleIn hero-delay-3 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-8 max-w-2xl mx-auto">
           {stats.map(({ label, value, icon: Icon }) => (
             <div key={label} className="glass rounded-2xl p-4 text-white text-center hover:bg-white/10 transition-colors">
               <Icon className="w-5 h-5 mx-auto mb-2 text-yellow-300" />
@@ -115,7 +87,7 @@ export function HeroSection() {
               <div className="text-xs md:text-sm text-white/70 mt-1">{label}</div>
             </div>
           ))}
-        </motion.div>
+        </div>
       </div>
 
       {/* Bottom wave */}

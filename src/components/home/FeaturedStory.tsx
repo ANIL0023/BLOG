@@ -1,6 +1,3 @@
-'use client';
-
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Heart, MessageCircle, Eye, Clock, ArrowRight, Star } from 'lucide-react';
@@ -13,25 +10,14 @@ interface FeaturedStoryProps {
 export function FeaturedStory({ blog }: FeaturedStoryProps) {
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="flex items-center gap-2 mb-8"
-      >
+      <div className="animate-fadeInUp flex items-center gap-2 mb-8">
         <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
         <span className="text-sm font-semibold text-gray-500 dark:text-dark-muted uppercase tracking-wider">
           Featured Story
         </span>
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.7 }}
-      >
+      <div className="animate-fadeInUp hero-delay-1">
         <Link href={`/blogs/${blog.slug}`}>
           <div className="group relative overflow-hidden rounded-3xl bg-white dark:bg-dark-card border border-gray-100 dark:border-dark-border shadow-sm hover:shadow-2xl transition-all duration-500 grid md:grid-cols-2">
             {/* Image */}
@@ -125,7 +111,7 @@ export function FeaturedStory({ blog }: FeaturedStoryProps) {
             </div>
           </div>
         </Link>
-      </motion.div>
+      </div>
     </section>
   );
 }

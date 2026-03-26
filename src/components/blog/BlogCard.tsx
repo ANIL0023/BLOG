@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Eye, Clock, Bookmark } from 'lucide-react';
 import { type Blog, formatDate, formatNumber } from '@/lib/data';
 
@@ -13,10 +12,8 @@ interface BlogCardProps {
 
 export function BlogCard({ blog, compact = false }: BlogCardProps) {
   return (
-    <motion.article
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
-      className="card overflow-hidden h-full flex flex-col group"
+    <article
+      className="card overflow-hidden h-full flex flex-col group hover:-translate-y-1 transition-transform duration-200"
     >
       {/* Image */}
       {!compact && (
@@ -112,6 +109,6 @@ export function BlogCard({ blog, compact = false }: BlogCardProps) {
           </div>
         </div>
       </div>
-    </motion.article>
+    </article>
   );
 }
