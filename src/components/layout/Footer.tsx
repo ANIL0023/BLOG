@@ -184,9 +184,6 @@ export function Footer() {
             © {new Date().getFullYear()} Blogo. All rights reserved.
           </p>
           <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-dark-muted">
-            <span>Built with</span>
-            <span className="text-red-500">♥</span>
-            <span>using Next.js & Tailwind CSS</span>
           </div>
         </div>
       </div>
